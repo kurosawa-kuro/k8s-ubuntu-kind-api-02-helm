@@ -1,0 +1,50 @@
+# helm-chart/k8s-api-sample/values.yaml
+
+replicaCount: 1
+
+image:
+  repository: 503561449641.dkr.ecr.ap-northeast-1.amazonaws.com/k8s-api-sample
+  pullPolicy: Always
+  tag: latest
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  hosts:
+    - host: localhost
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "200m"
+    memory: "256Mi"
+
+imagePullSecrets:
+  - name: regcred  # ECRの認証情報
+
+# ServiceAccount設定
+serviceAccount:
+  create: true  # ServiceAccountを作成するかどうか
+  name: ""      # 名前を指定する場合はここに設定
+  automount: true  # トークンの自動マウントを有効にするかどうか
+
+# Autoscaling設定
+autoscaling:
+  enabled: true  # HorizontalPodAutoscalerを有効にする
+  minReplicas: 1  # 最小レプリカ数
+  maxReplicas: 3  # 最大レプリカ数
+  targetCPUUtilizationPercentage: 80  # CPUの使用率ターゲット
+  targetMemoryUtilizationPercentage: 80  # メモリの使用率ターゲット
