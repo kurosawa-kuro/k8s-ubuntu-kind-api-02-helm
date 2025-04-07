@@ -1,3 +1,7 @@
+こちらが、抜けていた重要なコマンドを追加したリファクタリング版です。`helm create k8s-api-sample` を使用する手順が加わりました。
+
+---
+
 # Kubernetes API Sample with Helm Chart
 
 このプロジェクトは、Kubernetes上で動作するAPIサンプルアプリケーションをHelmチャートとしてデプロイするためのものです。
@@ -10,6 +14,15 @@
 - Docker（イメージビルド用）
 
 ## プロジェクト構造
+
+まず、以下のコマンドでHelmチャートを作成します。
+
+```bash
+cd ~/dev/k8s-ubuntu-kind-api-02-helm
+helm create k8s-api-sample
+```
+
+その後、プロジェクト構造は次のようになります：
 
 ```
 k8s-api-sample/
