@@ -391,3 +391,190 @@ helm uninstall k8s-api-sample
 # 関連リソースの削除
 kubectl delete secret regcred
 ```
+
+以下は、Helmでよく使用される設定パターンの整理された説明です。これらの設定を活用することで、Kubernetes環境でのアプリケーションの運用が最適化され、安定性とスケーラビリティを確保できます。
+
+---
+
+### 1. レプリカ数 (replicaCount)
+- **目的**: サービスの可用性とスケーラビリティを確保するため。
+- **理想状態**: `replicaCount` は、障害発生時に他のPodがリクエストを処理できるように設定します。通常は2以上に設定し、可用性を確保します。
+
+```yaml
+replicaCount: 2
+```
+
+---
+
+### 2. CPUリソースとメモリリソース (resources)
+- **目的**: アプリケーションが適切に動作するため、Kubernetesがリソースを適切にスケジューリングできるようにするため。
+- **理想状態**: `requests` はPodが正常に動作するために必要な最小限のリソースを、`limits` はリソース使用量を制限します。
+
+```yaml
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "200m"
+    memory: "256Mi"
+```
+
+---
+
+### 3. ポート番号 (service.port / service.targetPort)
+- **目的**: 外部からのアクセスと内部での通信を正しくルーティングするため。
+- **理想状態**: `service.port` は外部からアクセスする公開ポート、`service.targetPort` はコンテナ内でリッスンしているポートを指定します。
+
+```yaml
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+```
+
+---
+
+### 4. Ingress設定 (ingress)
+- **目的**: アプリケーションを外部からアクセス可能にし、URLベースのルーティングを実現するため。
+- **理想状態**: `ingress.enabled: true` でIngressを有効にし、外部からのアクセスを許可します。
+
+```yaml
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  hosts:
+    - host: localhost
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+```
+
+---
+
+### 5. 自動スケーリング (Horizontal Pod Autoscaling, HPA)
+- **目的**: リソースの需要に応じて自動でPodのレプリカ数をスケールさせるため。
+- **理想状態**: `autoscaling.enabled: true` で自動スケーリングを有効にし、負荷に応じてPodの数を増減させます。
+
+```yaml
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+```
+
+---
+
+### 6. ServiceAccountの設定
+- **目的**: Kubernetesのリソースにアクセスするための認証情報を管理するため。
+- **理想状態**: `serviceAccount.create: true` に設定することで、必要なServiceAccountを自動的に作成します。
+
+```yaml
+serviceAccount:
+  create: true
+  name: ""
+  automount: true
+```
+
+---
+
+### 7. Image Pull Secrets
+- **目的**: プライベートレジストリからイメージをプルする際に認証を行うため。
+- **理想状態**: `imagePullSecrets` を設定し、プライベートリポジトリから認証情報を使用してイメージをプルします。
+
+```yaml
+imagePullSecrets:
+  - name: regcred
+```
+
+---
+
+### 8. 環境変数 (env)
+- **目的**: アプリケーションが動作する環境に合わせた設定を管理するため。
+- **理想状態**: 環境変数を使用して、アプリケーションに必要な設定を外部から提供します。
+
+```yaml
+env:
+  - name: DATABASE_URL
+    value: "postgres://user:password@localhost:5432/mydb"
+  - name: APP_ENV
+    value: "production"
+```
+
+---
+
+### 9. アノテーション (annotations)
+- **目的**: Kubernetesリソースにメタデータを追加して、動作のカスタマイズや管理のために利用するため。
+- **理想状態**: IngressやService、Podなどにアノテーションを追加して、動作を調整します。
+
+```yaml
+service:
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
+```
+
+---
+
+### 10. リソースのリスタートポリシー (restartPolicy)
+- **目的**: Podが終了した際の挙動を制御するため。
+- **理想状態**: `restartPolicy: Always` を使用して、Podが終了すると自動的に再起動されるようにします。
+
+```yaml
+restartPolicy: Always
+```
+
+---
+
+### 11. PVC (PersistentVolumeClaim)
+- **目的**: 永続的なストレージを確保するため。
+- **理想状態**: `persistentVolumeClaim` を使用し、データベースなどの永続的なデータを保存します。
+
+```yaml
+persistence:
+  enabled: true
+  size: 5Gi
+  storageClass: standard
+```
+
+---
+
+### 12. タグ付きのイメージ (image.tag)
+- **目的**: デプロイするコンテナイメージのバージョンを管理するため。
+- **理想状態**: イメージのタグを指定して、安定したバージョンを運用します。
+
+```yaml
+image:
+  repository: myapp/repo
+  tag: "v1.0.0"
+```
+
+---
+
+### 13. ログレベル (logLevel)
+- **目的**: アプリケーションのログ出力を制御するため。
+- **理想状態**: ログの詳細度を調整することで、デバッグや運用中の情報収集を柔軟に行えます。
+
+```yaml
+env:
+  - name: LOG_LEVEL
+    value: "debug"
+```
+
+---
+
+### 14. タイムアウト設定 (timeout)
+- **目的**: アプリケーションやサービスのタイムアウトを管理するため。
+- **理想状態**: タイムアウトを設定することで、レスポンスが遅延することなく、サービスが適切に終了するようにします。
+
+```yaml
+timeoutSeconds: 30
+```
+
+---
+
+これらの設定を組み合わせることで、Kubernetes上でスケーラブルで安定したアプリケーションを運用できます。Helmを使ってリソース管理やアプリケーションのデプロイを簡素化し、最適な運用を実現しましょう。
